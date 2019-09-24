@@ -1,0 +1,24 @@
+  node ("JAVA-slave1-172.24.90.63"){
+    //def mvnHome
+    stage('checkout') { // for display purposes
+    checkout([$class: 'GitSCM', branches: [[name: '${branch}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '9dbe9eae-6314-4c4b-8c9d-9178b817f126', url: 'https://github.com/lzp2555368/gitxmb.git']]])
+}
+    stage('maven build') {
+    sh '/usr/local/maven/bin/mvn clean package -Dmaven.test.skip=true'
+    }
+    stage('deploy') {
+    sh '''WWWROOT=/usr/local/tomcat/webapps/ROOT
+    [ -d /data/backup ] || mkdir -p /data/backup
+    if [ -d $WWWROOT ];then
+    mv $WWWROOT /data/backup/tomcat-$(date +%F_%T)
+    fi
+    unzip ${WORKSPACE}/target/*.war -d $WWWROOT
+    PID=$(ps -ef | grep tomcat | egrep -v "grep|$$" | awk '{print $2}')
+    [ -n "$PID" ] && kill -9 $PID
+    /bin/bash /usr/local/tomcat/bin/startup.sh'''
+    }
+    stage('test') {
+    sh 'echo susses'
+    }
+    }
+
